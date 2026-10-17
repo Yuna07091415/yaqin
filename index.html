@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Yaqin — Bepul kurslar, kutubxonalar, sport maydonlari va eko-punktlar</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="Yaqin — Sizga yaqin bepul kurslar, kutubxonalar, ochiq sport maydonchalari va chiqindi qabul qilish punktlarini topish uchun interaktiv xarita.">
+  <meta name="theme-color" content="#4f46e5">
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet.js CSS (Interaktiv xarita) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Maxsus Ilova Stillari -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       Yuqori Navbar
+       ========================================== -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="logo-icon">Y</div>
+      <div class="brand-text">
+        <h1>Yaqin</h1>
+        <p data-i18n="tagline">Sizga eng yaqin bepul imkoniyatlar xaritasi</p>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Ko'p tillilikni tanlash -->
+      <div class="lang-selector" aria-label="Language selector">
+        <button type="button" class="lang-btn active" data-lang="uz">UZ</button>
+        <button type="button" class="lang-btn" data-lang="ru">RU</button>
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+      </div>
+
+      <!-- Tungi/Kunduzgi Mavzu tugmasi -->
+      <button type="button" class="btn-icon-round" id="theme-toggle-btn" data-i18n-title="themeToggle" title="Mavzu">
+        🌓
+      </button>
+
+      <!-- Joy qo'shish / Yangilash bosh tugmasi -->
+      <button type="button" class="btn btn-primary btn-sm" id="open-suggest-modal">
+        <span data-i18n="suggestBtn">+ Joy qo'shish / Yangilash</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       Shaffoflik & Haqiqiy Ma'lumot Eslatmasi (Disclaimer)
+       ========================================== -->
+  <div class="disclaimer-banner" id="disclaimer-banner">
+    <div class="disclaimer-content">
+      <span>ℹ️</span>
+      <div>
+        <strong data-i18n="disclaimerTitle">Shaffoflik va ochiq ma'lumotlar:</strong>
+        <span data-i18n="disclaimerText">Saytdagi ma'lumotlar ommaviy ochiq manbalar asosida namunaviy tarzda tuzilgan va jamoatchilik tomonidan tekshiriladi. Ma'lumotlarni soxta ravishda rasmiy deb ko'rsatmaymiz. O'zgarishlarni birgalikda to'ldirishimiz mumkin!</span>
+      </div>
+    </div>
+    <button type="button" class="disclaimer-btn" id="disclaimer-close" data-i18n="disclaimerClose">Tushundim</button>
+  </div>
+
+  <!-- ==========================================
+       Asosiy Split-View Maydon
+       ========================================== -->
+  <main class="main-wrapper">
+    
+    <!-- Chap Panel: Ro'yxat, Filtrlar va Qidiruv -->
+    <section class="sidebar-panel" id="list-container">
+      <div class="panel-header">
+        
+        <!-- Qidiruv maydoni -->
+        <div class="search-wrapper">
+          <span class="search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="search-input" 
+            class="search-input" 
+            data-i18n-placeholder="searchPlaceholder" 
+            placeholder="Joy nomi, manzil yoki kalit so'z bo'yicha qidiruv..."
+            autocomplete="off"
+          >
+          <button type="button" id="clear-search" class="clear-search-btn" title="Tozalash">&times;</button>
+        </div>
+
+        <!-- Kategoriyalar filtri -->
+        <div class="categories-scroll" role="tablist">
+          <button type="button" class="category-btn active" data-category="all" data-i18n="filterAll">
+            Barchasi
+          </button>
+          <button type="button" class="category-btn" data-category="courses" data-i18n="filterCourses">
+            🎓 Bepul Kurslar
+          </button>
+          <button type="button" class="category-btn" data-category="libraries" data-i18n="filterLibraries">
+            📚 Kutubxonalar
+          </button>
+          <button type="button" class="category-btn" data-category="sports" data-i18n="filterSports">
+            ⚽ Sport & Vorkaut
+          </button>
+          <button type="button" class="category-btn" data-category="waste" data-i18n="filterWaste">
+            ♻️ Chiqindi & Eko-punkt
+          </button>
+        </div>
+
+        <!-- Qo'shimcha Filtrlar & Geolokatsiya -->
+        <div class="filters-bar">
+          <div class="filter-checkboxes">
+            <label class="checkbox-label">
+              <input type="checkbox" id="filter-open-now">
+              <span data-i18n="filterOnlyOpen">Hozir ochiq</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="filter-free-only">
+              <span data-i18n="filterFreeOnly">100% Bepul</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="sort-distance">
+              <span data-i18n="filterNearMe">Menga eng yaqin</span>
+            </label>
+          </div>
+
+          <button type="button" class="btn-locate" id="locate-btn">
+            <span>📍</span>
+            <span class="btn-label" data-i18n="locatingBtn">Joylashuvimni aniqlash</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Natijalar soni -->
+      <div class="results-header">
+        <span id="places-count" data-i18n="foundCount">0 ta maskan topildi</span>
+      </div>
+
+      <!-- Kartochkalar ro'yxati -->
+      <div class="places-scroll-container" id="places-list">
+        <!-- JavaScript orqali dinamik to'ldiriladi -->
+      </div>
+    </section>
+
+    <!-- O'ng Panel: Interaktiv Xarita -->
+    <section class="map-panel mobile-hidden" id="map-container">
+      <div id="map"></div>
+    </section>
+
+  </main>
+
+  <!-- Mobil Qurilmalar uchun Xarita / Ro'yxat o'tkazgich tugmasi -->
+  <button type="button" class="mobile-view-toggle" id="mobile-view-toggle">
+    🗺️ <span data-i18n="mapView">Xarita</span>
+  </button>
+
+  <!-- ==========================================
+       Modal: Joy Haqida To'liq Tafsilotlar
+       ========================================== -->
+  <div class="modal-backdrop" id="details-modal" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div id="modal-cat-badge"></div>
+        <button type="button" class="modal-close-btn" id="close-details-modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div>
+          <h3 id="modal-place-title">...</h3>
+          <div style="margin-top: 4px;">
+            <span class="badge badge-verified" id="modal-status-note"></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-section-title" data-i18n="address">Manzil</div>
+          <p id="modal-address" class="text-main font-medium"></p>
+        </div>
+
+        <div class="card-details-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="detail-item" style="flex-direction: column; align-items: flex-start;">
+            <span class="detail-label" data-i18n="workingHours">Ish vaqti:</span>
+            <span class="detail-val" id="modal-hours"></span>
+          </div>
+          <div class="detail-item" style="flex-direction: column; align-items: flex-start;">
+            <span class="detail-label" data-i18n="price">Narxi:</span>
+            <span class="detail-val price-highlight" id="modal-price"></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="detail-section-title" data-i18n="details">Tavsif</div>
+          <p id="modal-description" style="font-size: 0.88rem; line-height: 1.6; color: var(--text-main);"></p>
+        </div>
+
+        <div>
+          <div class="detail-section-title" data-i18n="features">Qulayliklar</div>
+          <div class="feature-tag-list" id="modal-features"></div>
+        </div>
+
+        <div>
+          <div class="detail-section-title" data-i18n="contacts">Aloqa ma'lumotlari</div>
+          <div class="contacts-links-wrap" id="modal-contacts"></div>
+        </div>
+
+        <div>
+          <div class="detail-section-title" data-i18n="getDirections">Xaritada yo'nalish olish:</div>
+          <div class="nav-maps-group">
+            <a href="#" target="_blank" class="btn btn-sm btn-outline" id="btn-yandex-maps">
+              🧭 <span data-i18n="yandexMaps">Yandex Xarita</span>
+            </a>
+            <a href="#" target="_blank" class="btn btn-sm btn-outline" id="btn-google-maps">
+              🗺️ <span data-i18n="googleMaps">Google Maps</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline btn-sm" id="modal-share-btn">
+          🔗 <span data-i18n="share">Ulashish</span>
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" id="modal-edit-suggest-btn">
+          ✏️ <span data-i18n="suggestUpdate">Tahrir taklif qilish</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       Modal: Foydalanuvchi Yangilash / Qo'shish Taklifi
+       ========================================== -->
+  <div class="modal-backdrop" id="suggest-modal" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 data-i18n="modalTitle">Ma'lumotni yangilash yoki Yangi maskan taklif qilish</h3>
+          <p class="input-hint" data-i18n="modalSubtitle">Yaqin atrofdagi bepul va jamoat joylarini boyitishga hissa qo'shing</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="close-suggest-modal">&times;</button>
+      </div>
+
+      <form id="suggest-form">
+        <div class="modal-body">
+          
+          <!-- Taklif turi -->
+          <div class="form-group">
+            <label data-i18n="proposalType">Taklif turi</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="proposal-type" id="prop-type-new" value="new" checked>
+                <span data-i18n="proposalNew">Yangi jamoat joyini qo'shish</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="proposal-type" id="prop-type-existing" value="existing">
+                <span data-i18n="proposalExisting">Mavjud joy ma'lumotini to'g'rilash</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Agar mavjud joy tanlansa -->
+          <div class="form-group" id="suggest-existing-group" style="display: none;">
+            <label for="suggest-place-select" data-i18n="selectPlace">Qaysi joy haqida?</label>
+            <select id="suggest-place-select" class="form-control">
+              <!-- JS orqali to'ldiriladi -->
+            </select>
+          </div>
+
+          <!-- Joy nomi -->
+          <div class="form-group">
+            <label for="suggest-name" data-i18n="placeName">Joy nomi *</label>
+            <input type="text" id="suggest-name" class="form-control" required placeholder="Masalan: Yoshlar ochiq kutubxonasi">
+          </div>
+
+          <!-- Kategoriya -->
+          <div class="form-group">
+            <label for="suggest-category" data-i18n="placeCategory">Kategoriya *</label>
+            <select id="suggest-category" class="form-control" required>
+              <option value="courses">🎓 Bepul Kurslar va Ta'lim</option>
+              <option value="libraries">📚 Kutubxonalar va Mutolaa maskani</option>
+              <option value="sports">⚽ Sport maydonchalari & Vorkaut</option>
+              <option value="waste">♻️ Chiqindi & Eko-qayta ishlash punkti</option>
+            </select>
+          </div>
+
+          <!-- Manzil -->
+          <div class="form-group">
+            <label for="suggest-address" data-i18n="placeAddress">Aniq manzil yoki mo'ljal *</label>
+            <input type="text" id="suggest-address" class="form-control" required placeholder="Tuman, ko'cha, mo'ljal">
+          </div>
+
+          <!-- Koordinata -->
+          <div class="form-group">
+            <label for="suggest-coords">Koordinatalar (Kenglik, Uzunlik)</label>
+            <input type="text" id="suggest-coords" class="form-control" placeholder="41.3110, 69.2797">
+            <span class="input-hint" data-i18n="placePinHint">Maslahat: Koordinatani aniq belgilash uchun xaritadan nuqtani bosing</span>
+          </div>
+
+          <!-- Ish vaqti va Narx -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label for="suggest-hours" data-i18n="placeHours">Ish vaqti</label>
+              <input type="text" id="suggest-hours" class="form-control" placeholder="09:00 - 18:00">
+            </div>
+            <div class="form-group">
+              <label for="suggest-price" data-i18n="placePrice">Narx / Shart</label>
+              <input type="text" id="suggest-price" class="form-control" placeholder="100% Bepul">
+            </div>
+          </div>
+
+          <!-- Aloqa -->
+          <div class="form-group">
+            <label for="suggest-contacts" data-i18n="placeContacts">Aloqa (Telefon / Telegram / Sayt)</label>
+            <input type="text" id="suggest-contacts" class="form-control" placeholder="+998 90 ... yoki @telegram">
+          </div>
+
+          <!-- O'zgarishlar va sharh -->
+          <div class="form-group">
+            <label for="suggest-changes" data-i18n="placeChanges">Nima o'zgardi yoki qo'shimcha ma'lumot:</label>
+            <textarea id="suggest-changes" class="form-control" placeholder="Qo'shimcha izoh yoki yangilangan jadval..."></textarea>
+          </div>
+
+          <!-- Foydalanuvchi ma'lumoti -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label for="suggest-author" data-i18n="userName">Ismingiz (ixtiyoriy)</label>
+              <input type="text" id="suggest-author" class="form-control" placeholder="Ismingiz">
+            </div>
+            <div class="form-group">
+              <label for="suggest-contact" data-i18n="userContact">Aloqa uchun (ixtiyoriy)</label>
+              <input type="text" id="suggest-contact" class="form-control" placeholder="Email yoki tel">
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancel-suggest-modal" onclick="closeSuggestModal()" data-i18n="closeBtn">Bekor qilish</button>
+          <button type="submit" class="btn btn-primary" data-i18n="submitBtn">Taklifni yuborish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       Skriptlar (Leaflet, Data, I18n, App)
+       ========================================== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/data.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
